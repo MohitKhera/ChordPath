@@ -4,10 +4,12 @@ import tempfile
 import subprocess
 import librosa
 import numpy as np
+from flask_cors import CORS
 
 
 # Create Flask Object
 app = Flask(__name__)
+CORS(app)
 # Create decorator to define URL routes
 # /analzye is the endpoint URl
 # Only handles data submissions (POST) not retrievals (GET)
