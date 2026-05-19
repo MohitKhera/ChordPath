@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { SignedIn, SignedOut, SignInButton, useUser } from '@clerk/clerk-react'
 import './App.css'
 import ChordDiagram from './ChordDiagram'
 
@@ -12,6 +13,8 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef(null)
   const lastChordRef = useRef(null)
+  const { user } = useUser()
+  const [library, setLibrary] = useState([])
 
   useEffect(() => {
     if (status === "results" && file) {
@@ -45,6 +48,7 @@ function App() {
     setStatus("loading")
     const formData = new FormData()
     formData.append("file", file)
+    formData.append("user_id", user.id)  // ← add this line
     const response = await fetch("http://localhost:5000/analyze", {
       method: "POST",
       body: formData
@@ -63,6 +67,13 @@ function App() {
     return `${m}:${s}`
   }
 
+  const fetchLibrary = async () => {
+    const response = await fetch(`http://localhost:5000/my-songs?user_id=${user.id}`)
+    const data = await response.json()
+    setLibrary(data)
+    setStatus("library")
+  }
+
   return (
     <div className="app">
 
@@ -75,27 +86,34 @@ function App() {
           </div>
           <p className="tagline">Drop an MP3. Learn the chords.</p>
 
-          <label className="file-drop">
-            <input
-              type="file"
-              accept=".mp3"
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-            <div className="drop-inner">
-              <span className="drop-icon">↑</span>
-              <span className="drop-label">
-                {file ? file.name : 'Choose an MP3 file'}
-              </span>
-            </div>
-          </label>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="analyze-btn">Sign in to get started</button>
+            </SignInButton>
+          </SignedOut>
 
-          <button
-            className="analyze-btn"
-            onClick={handleSubmit}
-            disabled={!file}
-          >
-            Analyze Song
-          </button>
+          <SignedIn>
+            <label className="file-drop">
+              <input
+                type="file"
+                accept=".mp3"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+              <div className="drop-inner">
+                <span className="drop-icon">↑</span>
+                <span className="drop-label">
+                  {file ? file.name : 'Choose an MP3 file'}
+                </span>
+              </div>
+            </label>
+            <button
+              className="analyze-btn"
+              onClick={handleSubmit}
+              disabled={!file}
+            >
+              Analyze Song
+            </button>
+          </SignedIn>
         </div>
       )}
 
@@ -117,9 +135,9 @@ function App() {
             <div className="song-meta">
               <span className="meta-pill">🎵 {songData.key}</span>
               <span className="meta-pill">♩ {songData.tempo} BPM</span>
+              <button className="speed-btn" onClick={fetchLibrary}>Library</button>
             </div>
           </div>
-
           {/* Main chord display */}
           {(() => {
             const activeChord = songData.chords.find(chord =>
@@ -188,6 +206,33 @@ function App() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+      {status === "library" && (
+        <div className="results-screen">
+          <div className="results-header">
+            <span className="results-logo">Library</span>
+            <button className="speed-btn" onClick={() => setStatus("upload")}>+ New Song</button>
+          </div>
+          <div style={{ width: '100%' }}>
+            {library.length === 0 && <p className="waiting-text">No songs yet</p>}
+            {library.map(song => (
+              <div key={song.id} onClick={() => {
+                setSongData({ chords: simplifyChords(song.chords), key: song.key, tempo: song.tempo })
+                setStatus("results")
+              }} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}>
+                <span style={{ color: 'var(--text)' }}>{song.song_name}</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>{song.created_at}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
