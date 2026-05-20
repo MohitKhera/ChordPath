@@ -8,6 +8,9 @@ const CHORD_DICT = {
   "B":  { frets: [null, 2, 4, 4, 4, 2],    fingers: [null, 1, 3, 3, 3, 1] },
   "F#": { frets: [2, 4, 4, 3, 2, 2],       fingers: [1, 3, 4, 2, 1, 1] },
   "C#": { frets: [null, 4, 6, 6, 6, 4],    fingers: [null, 1, 3, 3, 3, 1] },
+  "D#": {frets:   [null, 6, 8, 8, 8, 6],   fingers: [null, 1, 3, 3, 3, 1] },
+  "G#": {frets:   [4, 6, 6, 5, 4, 4],      fingers: [1, 3, 4, 2, 1, 1] },
+  "A#": {frets:   [null, 1, 3, 3, 3, 1],   fingers: [null, 1, 3, 3, 3, 1] }
 }
 
 const STRINGS = 6
